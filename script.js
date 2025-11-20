@@ -1,5 +1,26 @@
 // === BASE RUNNER — WIDE SPACING FIX v2 ===
 
+// Import the Farcaster MiniApp SDK
+// Note: In a production environment, you would install the SDK via npm
+// For this example, we'll load it via a script tag in the HTML
+
+// Wait for the SDK to be available
+function initializeMiniApp() {
+  // Check if the SDK is available
+  if (typeof window.sdk !== 'undefined') {
+    // Hide the loading splash screen and display the app
+    window.sdk.actions.ready().catch(console.error);
+  } else {
+    // If SDK is not available, simulate readiness after a short delay
+    setTimeout(() => {
+      console.log('MiniApp SDK not detected, proceeding with standalone mode');
+    }, 1000);
+  }
+}
+
+// Initialize the miniapp when the page loads
+document.addEventListener('DOMContentLoaded', initializeMiniApp);
+
 const stage = document.getElementById("stage");
 const runner = document.getElementById("runner");
 const obstaclesContainer = document.getElementById("obstacles");
