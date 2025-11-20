@@ -1,30 +1,22 @@
-// === ANIME RUNNER GAME - FIXED VERSION ===
+// === ANIME RUNNER GAME - FULL WORKING VERSION ===
 
-console.log("Script loaded");
+console.log("Game script loaded");
 
-// Handle Ethereum wallet conflicts
-try {
-  // This will prevent conflicts with multiple wallet extensions
-  if (typeof window.ethereum !== 'undefined' && !window.ethereum.isMetaMask) {
-    console.log("Another Ethereum wallet detected, handling gracefully");
-  }
-} catch (e) {
-  console.log("Ethereum wallet conflict detected, continuing...");
-}
-
-// Game variables
-let gameRunning = false;
-let score = 0;
-let highScore = 0;
-let yVelocity = 0;
-let isJumping = false;
+// Game state variables
+var gameRunning = false;
+var score = 0;
+var highScore = 0;
+var yVelocity = 0;
+var isJumping = false;
+var gameSpeed = 3.0;
 
 // DOM Elements
-let stage, runner, obstaclesContainer, scoreEl, hiEl, startOverlay, gameOverOverlay, startBtn, retryBtn, finalScoreEl;
+var stage, runner, obstaclesContainer, scoreEl, hiEl;
+var startOverlay, gameOverOverlay, startBtn, retryBtn, finalScoreEl;
 
-// Wait for the page to load
+// Wait for page to load
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("DOM loaded");
+  console.log("DOM is ready");
   
   // Get all game elements
   stage = document.getElementById("stage");
@@ -38,62 +30,72 @@ document.addEventListener('DOMContentLoaded', function() {
   retryBtn = document.getElementById("retryBtn");
   finalScoreEl = document.getElementById("finalScore");
   
-  // Verify all elements exist
-  if (!stage || !runner || !obstaclesContainer || !scoreEl || !hiEl || 
-      !startOverlay || !gameOverOverlay || !startBtn || !retryBtn || !finalScoreEl) {
-    console.error("ERROR: Missing game elements");
-    return;
-  }
-  
-  console.log("All elements found");
-  
-  // Set up event listeners
-  startBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    console.log("Start button clicked");
-    startGame();
-  });
-  
-  retryBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    console.log("Retry button clicked");
-    startGame();
-  });
-  
-  stage.addEventListener('click', function(e) {
-    console.log("Stage clicked, gameRunning:", gameRunning);
-    if (!gameRunning) {
+  // Check if all elements exist
+  if (stage && runner && obstaclesContainer && scoreEl && hiEl && 
+      startOverlay && gameOverOverlay && startBtn && retryBtn && finalScoreEl) {
+    
+    console.log("All game elements found");
+    
+    // Set up event listeners
+    startBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log("Start button clicked");
       startGame();
-    } else {
-      jump();
-    }
-  });
-  
-  document.addEventListener('keydown', function(e) {
-    console.log("Key pressed:", e.code);
-    if (e.code === "Space") {
+    });
+    
+    retryBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log("Retry button clicked");
+      startGame();
+    });
+    
+    stage.addEventListener('click', function() {
+      console.log("Stage clicked");
       if (!gameRunning) {
         startGame();
       } else {
         jump();
       }
-    }
-  });
-  
-  // Initialize high score display
-  hiEl.textContent = highScore;
-  
-  console.log("Game initialized");
+    });
+    
+    document.addEventListener('keydown', function(e) {
+      if (e.code === "Space") {
+        if (!gameRunning) {
+          startGame();
+        } else {
+          jump();
+        }
+      }
+    });
+    
+    // Initialize high score
+    hiEl.textContent = highScore;
+    
+    console.log("Game initialized successfully");
+  } else {
+    console.error("Missing game elements:");
+    console.log("stage:", !!stage);
+    console.log("runner:", !!runner);
+    console.log("obstaclesContainer:", !!obstaclesContainer);
+    console.log("scoreEl:", !!scoreEl);
+    console.log("hiEl:", !!hiEl);
+    console.log("startOverlay:", !!startOverlay);
+    console.log("gameOverOverlay:", !!gameOverOverlay);
+    console.log("startBtn:", !!startBtn);
+    console.log("retryBtn:", !!retryBtn);
+    console.log("finalScoreEl:", !!finalScoreEl);
+  }
 });
 
 // Start the game
 function startGame() {
-  console.log("startGame() called");
+  console.log("Starting game");
   
   // Reset game state
   gameRunning = true;
   score = 0;
   scoreEl.textContent = score;
+  gameSpeed = 3.0;
   yVelocity = 0;
   isJumping = false;
   
@@ -108,27 +110,19 @@ function startGame() {
   runner.style.bottom = "6px";
   
   // Start game loop
-  console.log("Starting game loop");
   gameLoop();
 }
 
 // Jump function
 function jump() {
-  console.log("Jump called");
   if (!gameRunning || isJumping) return;
   isJumping = true;
   yVelocity = 8.9;
-  console.log("Jump executed");
 }
 
 // Game loop
 function gameLoop() {
-  console.log("Game loop running");
-  
-  if (!gameRunning) {
-    console.log("Game not running, exiting loop");
-    return;
-  }
+  if (!gameRunning) return;
   
   // Update score
   score += 0.1;
@@ -136,7 +130,7 @@ function gameLoop() {
   
   // Apply gravity
   yVelocity -= 0.37;
-  let newBottom = parseFloat(runner.style.bottom || "6") + yVelocity;
+  var newBottom = parseFloat(runner.style.bottom || "6") + yVelocity;
   
   if (newBottom <= 6) {
     newBottom = 6;
@@ -147,12 +141,11 @@ function gameLoop() {
   runner.style.bottom = newBottom + "px";
   
   // Continue loop
-  setTimeout(gameLoop, 16); // ~60 FPS
+  requestAnimationFrame(gameLoop);
 }
 
 // End game
 function endGame() {
-  console.log("Game ended");
   gameRunning = false;
   
   // Update high score
