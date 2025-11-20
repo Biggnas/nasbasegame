@@ -1,171 +1,215 @@
 // === BASE RUNNER — WIDE SPACING FIX v2 ===
 
-// Import the Farcaster MiniApp SDK
-// Note: In a production environment, you would install the SDK via npm
-// For this example, we'll load it via a script tag in the HTML
+// Global variables
+let gameRunning = false;
+let score = 0;
+let highScore = 0;
+let yVelocity = 0;
+let gravity = 0.37;
+const jumpForce = 8.9;
+let isJumping = false;
+let gameSpeed = 3.0;
+const speedIncreaseRate = 0.0009;
+let nextSpawnTime = 0;
+let lastSpawnTime = 0;
+let obstacleTimer = null;
 
-// Wait for the SDK to be available
-function initializeMiniApp() {
-  // Check if the SDK is available
-  if (typeof window.sdk !== 'undefined') {
-    // Hide the loading splash screen and display the app
-    window.sdk.actions.ready().catch(console.error);
-  } else {
-    // If SDK is not available, simulate readiness after a short delay
-    setTimeout(() => {
-      console.log('MiniApp SDK not detected, proceeding with standalone mode');
-    }, 1000);
+// DOM Elements
+let stage, runner, obstaclesContainer, scoreEl, hiEl, startOverlay, gameOverOverlay, startBtn, retryBtn, finalScoreEl;
+
+// Initialize game when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM Loaded - Initializing game elements");
+  
+  // Get all DOM elements
+  stage = document.getElementById("stage");
+  runner = document.getElementById("runner");
+  obstaclesContainer = document.getElementById("obstacles");
+  scoreEl = document.getElementById("score");
+  hiEl = document.getElementById("hi");
+  startOverlay = document.getElementById("startOverlay");
+  gameOverOverlay = document.getElementById("gameOverOverlay");
+  startBtn = document.getElementById("startBtn");
+  retryBtn = document.getElementById("retryBtn");
+  finalScoreEl = document.getElementById("finalScore");
+  
+  // Check if all elements are found
+  if (!stage || !runner || !obstaclesContainer || !scoreEl || !hiEl || 
+      !startOverlay || !gameOverOverlay || !startBtn || !retryBtn || !finalScoreEl) {
+    console.error("Some game elements are missing from the DOM");
+    return;
   }
   
-  // Initialize game elements and event listeners after DOM is fully loaded
-  initializeGame();
+  console.log("All game elements found");
+  
+  // Attach event listeners
+  document.addEventListener("keydown", handleKeyDown);
+  stage.addEventListener("click", handleStageClick);
+  startBtn.addEventListener("click", startGame);
+  retryBtn.addEventListener("click", startGame);
+  
+  // Initialize scores
+  hiEl.textContent = highScore;
+  
+  // Try to initialize MiniApp SDK
+  initializeMiniApp();
+});
+
+// Initialize MiniApp SDK if available
+function initializeMiniApp() {
+  try {
+    if (typeof window.sdk !== 'undefined') {
+      console.log("MiniApp SDK detected");
+      window.sdk.actions.ready().catch(err => {
+        console.log("SDK ready error:", err);
+      });
+    } else {
+      console.log("MiniApp SDK not detected, running in standalone mode");
+    }
+  } catch (err) {
+    console.log("Error initializing MiniApp SDK:", err);
+  }
 }
 
-// Initialize game elements and event listeners
-function initializeGame() {
-  const stage = document.getElementById("stage");
-  const runner = document.getElementById("runner");
-  const obstaclesContainer = document.getElementById("obstacles");
+// Event handlers
+function handleKeyDown(e) {
+  if (e.code === "Space") {
+    if (!gameRunning) {
+      startGame();
+    } else {
+      jump();
+    }
+  }
+}
 
-  const scoreEl = document.getElementById("score");
-  const hiEl = document.getElementById("hi");
+function handleStageClick() {
+  if (!gameRunning) {
+    startGame();
+  } else {
+    jump();
+  }
+}
 
-  const startOverlay = document.getElementById("startOverlay");
-  const gameOverOverlay = document.getElementById("gameOverOverlay");
-  const startBtn = document.getElementById("startBtn");
-  const retryBtn = document.getElementById("retryBtn");
-  const finalScoreEl = document.getElementById("finalScore");
+// Game functions
+function startGame() {
+  console.log("Starting game");
+  
+  // Clear any existing timers
+  clearTimeout(obstacleTimer);
+  
+  // Reset game state
+  gameRunning = true;
+  score = 0;
+  scoreEl.textContent = score;
+  gameSpeed = 3.0;
+  
+  // Hide overlays
+  startOverlay.style.display = "none";
+  gameOverOverlay.style.display = "none";
+  
+  // Clear obstacles
+  obstaclesContainer.innerHTML = "";
+  
+  // Reset runner
+  yVelocity = 0;
+  isJumping = false;
+  runner.style.bottom = "6px";
+  
+  // Set next spawn time
+  nextSpawnTime = Date.now() + 1200;
+  
+  // Start game loop
+  requestAnimationFrame(gameLoop);
+}
 
-  let gameRunning = false;
-  let score = 0;
-  let highScore = 0;
+function endGame() {
+  console.log("Ending game");
+  
+  gameRunning = false;
+  clearTimeout(obstacleTimer);
+  
+  // Update high score
+  if (score > highScore) {
+    highScore = score;
+    hiEl.textContent = highScore;
+  }
+  
+  // Show final score
+  finalScoreEl.textContent = Math.floor(score);
+  
+  // Show game over overlay
+  gameOverOverlay.style.display = "flex";
+}
 
-  let yVelocity = 0;
-  let gravity = 0.37;
-  const jumpForce = 8.9;
-  let isJumping = false;
+function jump() {
+  if (!gameRunning || isJumping) return;
+  isJumping = true;
+  yVelocity = jumpForce;
+}
 
-  let gameSpeed = 3.0;
-  const speedIncreaseRate = 0.0009;
+function spawnObstacle() {
+  const obstacle = document.createElement("div");
+  obstacle.classList.add("obstacle");
+  
+  const height = 24 + Math.random() * 10;
+  obstacle.style.height = `${height}px`;
+  obstacle.style.right = "-40px";
+  obstaclesContainer.appendChild(obstacle);
+}
 
-  // 🧠 Extra large spacing — guaranteed delay between spawns
-  let nextSpawnTime = 0;
-  let lastSpawnTime = 0;
-
-  let obstacleTimer = null;
-
-  window.startGame = function() {
-    clearTimeout(obstacleTimer);
-
-    gameRunning = true;
-    score = 0;
-    scoreEl.textContent = score;
-    gameSpeed = 3.0;
-
-    startOverlay.style.display = "none";
-    gameOverOverlay.style.display = "none";
-    obstaclesContainer.innerHTML = "";
-
+function gameLoop() {
+  if (!gameRunning) return;
+  
+  // Update score and speed
+  score += 0.01;
+  scoreEl.textContent = Math.floor(score);
+  gameSpeed += speedIncreaseRate;
+  
+  // Apply gravity
+  yVelocity -= gravity;
+  let newBottom = parseFloat(getComputedStyle(runner).bottom) + yVelocity;
+  
+  // Check ground collision
+  if (newBottom <= 6) {
+    newBottom = 6;
     yVelocity = 0;
     isJumping = false;
-    runner.style.bottom = "6px";
-
-    nextSpawnTime = Date.now() + 1200; // start delay
-    requestAnimationFrame(gameLoop);
-  };
-
-  function endGame() {
-    gameRunning = false;
-    clearTimeout(obstacleTimer);
-
-    if (score > highScore) {
-      highScore = score;
-      hiEl.textContent = highScore;
+  }
+  runner.style.bottom = `${newBottom}px`;
+  
+  // Spawn obstacles
+  const now = Date.now();
+  if (now >= nextSpawnTime) {
+    spawnObstacle();
+    
+    // Set next spawn time
+    const delay = 1200 + Math.random() * 1000;
+    nextSpawnTime = now + delay;
+  }
+  
+  // Move obstacles and check collisions
+  const obstacles = document.querySelectorAll(".obstacle");
+  obstacles.forEach(obstacle => {
+    const right = parseFloat(getComputedStyle(obstacle).right);
+    obstacle.style.right = `${right + gameSpeed}px`;
+    
+    // Remove obstacles that are off-screen
+    if (right > stage.offsetWidth + 40) {
+      obstacle.remove();
     }
-
-    finalScoreEl.textContent = Math.floor(score);
-    gameOverOverlay.style.display = "flex";
-  }
-
-  function jump() {
-    if (!gameRunning || isJumping) return;
-    isJumping = true;
-    yVelocity = jumpForce;
-  }
-
-  function spawnObstacle() {
-    const obstacle = document.createElement("div");
-    obstacle.classList.add("obstacle");
-
-    const height = 24 + Math.random() * 10;
-    obstacle.style.height = `${height}px`;
-    obstacle.style.right = "-40px";
-    obstaclesContainer.appendChild(obstacle);
-  }
-
-  function gameLoop() {
-    if (!gameRunning) return;
-
-    score += 0.01;
-    scoreEl.textContent = Math.floor(score);
-    gameSpeed += speedIncreaseRate;
-
-    yVelocity -= gravity;
-    let newBottom = parseFloat(getComputedStyle(runner).bottom) + yVelocity;
-
-    if (newBottom <= 6) {
-      newBottom = 6;
-      yVelocity = 0;
-      isJumping = false;
-    }
-    runner.style.bottom = `${newBottom}px`;
-
-    // 🧱 obstacle logic
-    const now = Date.now();
-    if (now >= nextSpawnTime) {
-      spawnObstacle();
-
-      // always big spacing (1.2s–2.2s delay)
-      const delay = 1200 + Math.random() * 1000;
-      nextSpawnTime = now + delay;
-    }
-
-    const obstacles = document.querySelectorAll(".obstacle");
-    obstacles.forEach(obstacle => {
-      const right = parseFloat(getComputedStyle(obstacle).right);
-      obstacle.style.right = `${right + gameSpeed}px`;
-
-      if (right > stage.offsetWidth + 40) obstacle.remove();
-
-      const runnerRect = runner.getBoundingClientRect();
-      const obsRect = obstacle.getBoundingClientRect();
-
-      const overlapX = !(runnerRect.right - 16 < obsRect.left || runnerRect.left + 16 > obsRect.right);
-      const overlapY = !(runnerRect.bottom - 8 < obsRect.top || runnerRect.top + 8 > obsRect.bottom);
-
-      if (overlapX && overlapY) {
-        endGame();
-      }
-    });
-
-    requestAnimationFrame(gameLoop);
-  }
-
-  document.addEventListener("keydown", (e) => {
-    if (e.code === "Space") {
-      if (!gameRunning) window.startGame();
-      else jump();
+    
+    // Check collision
+    const runnerRect = runner.getBoundingClientRect();
+    const obsRect = obstacle.getBoundingClientRect();
+    
+    const overlapX = !(runnerRect.right - 16 < obsRect.left || runnerRect.left + 16 > obsRect.right);
+    const overlapY = !(runnerRect.bottom - 8 < obsRect.top || runnerRect.top + 8 > obsRect.bottom);
+    
+    if (overlapX && overlapY) {
+      endGame();
     }
   });
-
-  stage.addEventListener("click", () => {
-    if (!gameRunning) window.startGame();
-    else jump();
-  });
-
-  startBtn.onclick = window.startGame;
-  retryBtn.onclick = window.startGame;
+  
+  // Continue game loop
+  requestAnimationFrame(gameLoop);
 }
-
-// Initialize the miniapp when the page loads
-document.addEventListener('DOMContentLoaded', initializeMiniApp);
