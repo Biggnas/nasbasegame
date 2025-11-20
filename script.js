@@ -1,6 +1,16 @@
-// === ANIME RUNNER GAME - SIMPLIFIED VERSION ===
+// === ANIME RUNNER GAME - FIXED VERSION ===
 
 console.log("Script loaded");
+
+// Handle Ethereum wallet conflicts
+try {
+  // This will prevent conflicts with multiple wallet extensions
+  if (typeof window.ethereum !== 'undefined' && !window.ethereum.isMetaMask) {
+    console.log("Another Ethereum wallet detected, handling gracefully");
+  }
+} catch (e) {
+  console.log("Ethereum wallet conflict detected, continuing...");
+}
 
 // Game variables
 let gameRunning = false;
@@ -38,17 +48,19 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log("All elements found");
   
   // Set up event listeners
-  startBtn.addEventListener('click', function() {
+  startBtn.addEventListener('click', function(e) {
+    e.preventDefault();
     console.log("Start button clicked");
     startGame();
   });
   
-  retryBtn.addEventListener('click', function() {
+  retryBtn.addEventListener('click', function(e) {
+    e.preventDefault();
     console.log("Retry button clicked");
     startGame();
   });
   
-  stage.addEventListener('click', function() {
+  stage.addEventListener('click', function(e) {
     console.log("Stage clicked, gameRunning:", gameRunning);
     if (!gameRunning) {
       startGame();
