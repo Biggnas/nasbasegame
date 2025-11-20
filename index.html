@@ -257,6 +257,9 @@
     let highScore = 0;
     let yVelocity = 0;
     let isJumping = false;
+    let gameSpeed = 3.0;
+    let nextSpawnTime = 0;
+    let frameCount = 0;
     
     // DOM Elements
     let stage, runner, obstaclesContainer, scoreEl, hiEl;
@@ -308,8 +311,11 @@
       gameRunning = true;
       score = 0;
       scoreEl.textContent = score;
+      gameSpeed = 3.0;
       yVelocity = 0;
       isJumping = false;
+      frameCount = 0;
+      nextSpawnTime = Date.now() + 1500; // First obstacle after 1.5 seconds
       
       // Hide overlays
       startOverlay.style.display = "none";
@@ -332,13 +338,25 @@
       yVelocity = 8.9;
     }
     
+    // Spawn obstacle
+    function spawnObstacle() {
+      const obstacle = document.createElement("div");
+      obstacle.className = "obstacle";
+      obstacle.style.right = "-30px"; // Start off-screen to the right
+      obstaclesContainer.appendChild(obstacle);
+    }
+    
     // Game loop
     function gameLoop() {
       if (!gameRunning) return;
       
-      // Update score
-      score += 0.1;
-      scoreEl.textContent = Math.floor(score);
+      frameCount++;
+      
+      // Update score (slower now)
+      if (frameCount % 5 === 0) { // Only update score every 5 frames
+        score += 0.1;
+        scoreEl.textContent = Math.floor(score);
+      }
       
       // Apply gravity
       yVelocity -= 0.37;
@@ -352,8 +370,62 @@
       
       runner.style.bottom = newBottom + "px";
       
+      // Spawn obstacles
+      const now = Date.now();
+      if (now >= nextSpawnTime) {
+        spawnObstacle();
+        nextSpawnTime = now + 1000 + Math.random() * 1000; // Next obstacle in 1-2 seconds
+      }
+      
+      // Move obstacles and check collisions
+      const obstacles = document.querySelectorAll(".obstacle");
+      obstacles.forEach(obstacle => {
+        // Move obstacle left
+        const currentRight = parseFloat(obstacle.style.right || "0");
+        obstacle.style.right = (currentRight + gameSpeed) + "px";
+        
+        // Remove obstacles that are off-screen
+        if (currentRight > stage.offsetWidth) {
+          obstacle.remove();
+          return;
+        }
+        
+        // Check collision (simplified)
+        const runnerRect = runner.getBoundingClientRect();
+        const obstacleRect = obstacle.getBoundingClientRect();
+        
+        // Simple collision detection
+        if (runnerRect.right > obstacleRect.left && 
+            runnerRect.left < obstacleRect.right &&
+            runnerRect.bottom > obstacleRect.top) {
+          endGame();
+        }
+      });
+      
+      // Increase game speed gradually
+      if (frameCount % 100 === 0) {
+        gameSpeed += 0.1;
+      }
+      
       // Continue loop
       requestAnimationFrame(gameLoop);
+    }
+    
+    // End game
+    function endGame() {
+      gameRunning = false;
+      
+      // Update high score
+      if (score > highScore) {
+        highScore = Math.floor(score);
+        hiEl.textContent = highScore;
+      }
+      
+      // Show final score
+      finalScoreEl.textContent = Math.floor(score);
+      
+      // Show game over screen
+      gameOverOverlay.style.display = "flex";
     }
   </script>
 </body>
