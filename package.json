@@ -1,8 +1,6 @@
 {
+  "private": true,
   "name": "nasbasegame",
   "version": "1.0.0",
-  "description": "Anime Runner Game as Base Miniapp",
-  "keywords": ["miniapp", "game", "base", "farcaster"],
-  "author": "Your Name",
-  "license": "MIT"
+  "description": "Anime Runner Game as Base Miniapp"
 }
