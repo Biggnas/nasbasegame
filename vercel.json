@@ -6,18 +6,8 @@
         {
           "key": "Content-Type",
           "value": "application/json"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/.well-known/farcaster.json",
-      "destination": "/.well-known/farcaster.json"
     }
   ]
 }
