@@ -11,9 +11,6 @@
   "keywords": ["miniapp", "game", "base", "farcaster"],
   "author": "Your Name",
   "license": "MIT",
-  "dependencies": {
-    "@farcaster/miniapp-sdk": "^0.1.0"
-  },
   "devDependencies": {
     "vite": "^4.0.0"
   }
