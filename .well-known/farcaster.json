@@ -5,7 +5,7 @@
     "signature": ""
   },
   "baseBuilder": {
-    "ownerAddress": "0x"
+    "ownerAddress": "0x21210dfB6B17AF5B46EeB0b9Ca25672B361A8B5f"
   },
   "miniapp": {
     "version": "1",
@@ -28,6 +28,8 @@
     "ogTitle": "Anime Runner - Base Miniapp",
     "ogDescription": "Play the addictive Anime Runner game directly in your Farcaster client.",
     "ogImageUrl": "https://nasbasegame.vercel.app/og.png",
-    "noindex": true
+    "noindex": true,
+    "width": 400,
+    "height": 600
   }
 }
