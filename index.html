@@ -453,16 +453,53 @@
   </script>
   
   <script>
-    // Initialize the MiniApp SDK - Simple and clean
-    document.addEventListener('DOMContentLoaded', async function() {
-      if (window.sdk && typeof window.sdk.actions.ready === 'function') {
-        try {
-          await window.sdk.actions.ready();
-        } catch (error) {
-          console.error('SDK ready error:', error);
+    // Simple test to see if this script runs at all
+    console.log('MiniApp initialization script running');
+    
+    // Debug: Check what's available in window object
+    console.log('Window object keys:', Object.keys(window).filter(key => key.includes('sdk') || key.includes('SDK') || key.includes('farcaster')));
+    
+    // Debug: Check if SDK script loaded
+    function checkAndInitializeSDK() {
+      console.log('Checking for SDK...');
+      console.log('Window.sdk exists:', typeof window.sdk);
+      
+      if (window.sdk) {
+        console.log('SDK object:', window.sdk);
+        console.log('SDK actions exist:', typeof window.sdk.actions);
+        if (window.sdk.actions) {
+          console.log('SDK actions keys:', Object.keys(window.sdk.actions));
+          console.log('SDK ready function exists:', typeof window.sdk.actions.ready);
         }
       }
-    });
+      
+      // Initialize the MiniApp SDK
+      if (window.sdk && window.sdk.actions && typeof window.sdk.actions.ready === 'function') {
+        console.log('Calling SDK ready...');
+        try {
+          window.sdk.actions.ready();
+          console.log('SDK ready called successfully');
+        } catch (error) {
+          console.error('Error calling SDK ready:', error);
+        }
+      } else {
+        console.log('SDK not properly initialized');
+        // List all properties of window to see what's available
+        console.log('Available window properties:', Object.keys(window).slice(0, 50)); // First 50 properties
+      }
+    }
+    
+    // Try immediately
+    console.log('Trying immediate SDK check...');
+    checkAndInitializeSDK();
+    
+    // Also try on DOM load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkAndInitializeSDK);
+    } else {
+      // Document already loaded
+      checkAndInitializeSDK();
+    }
   </script>
 </body>
 </html>
