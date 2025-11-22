@@ -442,26 +442,14 @@
       gameOverOverlay.style.display = "flex";
     }
     
-    // Initialize the MiniApp SDK when the page loads
-    function initializeSDK() {
-      try {
-        if (typeof window.sdk !== 'undefined') {
-          window.sdk.actions.ready();
-          console.log('MiniApp SDK ready called successfully');
-        } else {
-          console.log('MiniApp SDK not available');
-        }
-      } catch (error) {
-        console.log('SDK ready error:', error);
-      }
-    }
-    
-    // Try to initialize immediately
-    initializeSDK();
-    
-    // Also try after DOM is loaded
+    // Initialize the MiniApp SDK - Simple approach as per documentation
     document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(initializeSDK, 500);
+      // Once app is ready to be displayed
+      if (typeof window.sdk !== 'undefined') {
+        window.sdk.actions.ready().catch(function(error) {
+          console.log('SDK ready error:', error);
+        });
+      }
     });
   </script>
 </body>
