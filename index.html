@@ -450,53 +450,19 @@
       // Show game over screen
       gameOverOverlay.style.display = "flex";
     }
-    
-    // Initialize the MiniApp SDK - Multiple approaches
-    function initializeMiniApp() {
-      console.log('Attempting to initialize MiniApp SDK...');
-      
-      // Approach 1: Direct call if SDK is available
-      if (typeof window.sdk !== 'undefined') {
-        console.log('SDK found, calling ready...');
+  </script>
+  
+  <script>
+    // Initialize the MiniApp SDK - Simple and clean
+    document.addEventListener('DOMContentLoaded', async function() {
+      if (window.sdk && typeof window.sdk.actions.ready === 'function') {
         try {
-          window.sdk.actions.ready();
-          console.log('SDK ready called successfully');
-          return true;
+          await window.sdk.actions.ready();
         } catch (error) {
-          console.log('Direct SDK ready error:', error);
+          console.error('SDK ready error:', error);
         }
       }
-      
-      // Approach 2: Try with promise handling
-      if (typeof window.sdk !== 'undefined' && window.sdk.actions && window.sdk.actions.ready) {
-        console.log('SDK actions ready found, calling with promise...');
-        window.sdk.actions.ready().then(function() {
-          console.log('SDK ready promise resolved');
-        }).catch(function(error) {
-          console.log('SDK ready promise rejected:', error);
-        });
-        return true;
-      }
-      
-      console.log('SDK not properly initialized');
-      return false;
-    }
-    
-    // Try immediately
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeMiniApp);
-    } else {
-      // Document already loaded
-      initializeMiniApp();
-    }
-    
-    // Also try after a delay as backup
-    setTimeout(function() {
-      if (typeof window.sdk !== 'undefined') {
-        console.log('Retrying SDK initialization after delay...');
-        initializeMiniApp();
-      }
-    }, 2000);
+    });
   </script>
 </body>
 </html>
