@@ -16,6 +16,8 @@
       }
     }
   }' />
+  <!-- Farcaster MiniApp SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
     
@@ -442,28 +444,38 @@
     
     // Initialize the MiniApp SDK
     function initializeMiniApp() {
-      // Check if SDK is available
-      if (typeof window.sdk !== 'undefined') {
-        // Hide the loading splash screen and display the app
+      // Try to call ready multiple times with a delay
+      function tryReady(attempts) {
+        if (attempts <= 0) {
+          console.log('Failed to initialize MiniApp SDK after multiple attempts');
+          return;
+        }
+        
         try {
-          window.sdk.actions.ready();
-          console.log('MiniApp SDK ready called successfully');
+          if (typeof window.sdk !== 'undefined') {
+            window.sdk.actions.ready();
+            console.log('MiniApp SDK ready called successfully');
+            return true;
+          } else {
+            console.log('MiniApp SDK not available, retrying... (' + attempts + ' attempts left)');
+            setTimeout(function() {
+              tryReady(attempts - 1);
+            }, 500);
+          }
         } catch (error) {
           console.log('SDK ready error:', error);
+          setTimeout(function() {
+            tryReady(attempts - 1);
+          }, 500);
         }
-      } else {
-        // If SDK is not available, simulate readiness after a short delay
-        setTimeout(function() {
-          console.log('MiniApp SDK not detected, proceeding with standalone mode');
-        }, 1000);
       }
+      
+      // Start trying to initialize
+      tryReady(5);
     }
     
     // Call initializeMiniApp when the page loads
     document.addEventListener('DOMContentLoaded', initializeMiniApp);
   </script>
-  
-  <!-- Farcaster MiniApp SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js"></script>
 </body>
 </html>
