@@ -439,6 +439,31 @@
       // Show game over screen
       gameOverOverlay.style.display = "flex";
     }
+    
+    // Initialize the MiniApp SDK
+    function initializeMiniApp() {
+      // Check if SDK is available
+      if (typeof window.sdk !== 'undefined') {
+        // Hide the loading splash screen and display the app
+        try {
+          window.sdk.actions.ready();
+          console.log('MiniApp SDK ready called successfully');
+        } catch (error) {
+          console.log('SDK ready error:', error);
+        }
+      } else {
+        // If SDK is not available, simulate readiness after a short delay
+        setTimeout(function() {
+          console.log('MiniApp SDK not detected, proceeding with standalone mode');
+        }, 1000);
+      }
+    }
+    
+    // Call initializeMiniApp when the page loads
+    document.addEventListener('DOMContentLoaded', initializeMiniApp);
   </script>
+  
+  <!-- Farcaster MiniApp SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js"></script>
 </body>
 </html>
