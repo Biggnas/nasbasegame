@@ -442,40 +442,27 @@
       gameOverOverlay.style.display = "flex";
     }
     
-    // Initialize the MiniApp SDK
-    function initializeMiniApp() {
-      // Try to call ready multiple times with a delay
-      function tryReady(attempts) {
-        if (attempts <= 0) {
-          console.log('Failed to initialize MiniApp SDK after multiple attempts');
-          return;
+    // Initialize the MiniApp SDK when the page loads
+    function initializeSDK() {
+      try {
+        if (typeof window.sdk !== 'undefined') {
+          window.sdk.actions.ready();
+          console.log('MiniApp SDK ready called successfully');
+        } else {
+          console.log('MiniApp SDK not available');
         }
-        
-        try {
-          if (typeof window.sdk !== 'undefined') {
-            window.sdk.actions.ready();
-            console.log('MiniApp SDK ready called successfully');
-            return true;
-          } else {
-            console.log('MiniApp SDK not available, retrying... (' + attempts + ' attempts left)');
-            setTimeout(function() {
-              tryReady(attempts - 1);
-            }, 500);
-          }
-        } catch (error) {
-          console.log('SDK ready error:', error);
-          setTimeout(function() {
-            tryReady(attempts - 1);
-          }, 500);
-        }
+      } catch (error) {
+        console.log('SDK ready error:', error);
       }
-      
-      // Start trying to initialize
-      tryReady(5);
     }
     
-    // Call initializeMiniApp when the page loads
-    document.addEventListener('DOMContentLoaded', initializeMiniApp);
+    // Try to initialize immediately
+    initializeSDK();
+    
+    // Also try after DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(initializeSDK, 500);
+    });
   </script>
 </body>
 </html>
