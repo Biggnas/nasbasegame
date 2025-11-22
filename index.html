@@ -20,7 +20,7 @@
   }' />
   <!-- Farcaster MiniApp SDK - Trying alternative approach -->
   <script>
-    // Debug: Try loading SDK dynamically
+    // Debug approach - check what the SDK script actually exports
     console.log('Attempting to load SDK dynamically...');
     
     // Function to load script dynamically
@@ -29,6 +29,7 @@
       script.src = src;
       script.onload = function() {
         console.log('SDK script loaded successfully');
+        console.log('Window object after SDK load:', Object.keys(window).filter(key => key.includes('sdk') || key.includes('farcaster') || key.includes('SDK')));
         if (callback) callback();
       };
       script.onerror = function() {
@@ -37,21 +38,181 @@
       document.head.appendChild(script);
     }
     
-    // Load SDK and initialize when ready
+    // Load SDK and check what it exports
     loadScript('https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js', function() {
-      console.log('SDK script loaded, checking for sdk object...');
-      if (typeof window.sdk !== 'undefined') {
-        console.log('SDK is now available, initializing...');
+      console.log('SDK script loaded, checking window object...');
+      
+      // Check various possible names for the SDK
+      const possibleNames = ['sdk', 'SDK', 'farcaster', 'Farcaster', 'miniapp', 'MiniApp'];
+      possibleNames.forEach(name => {
+        if (window[name]) {
+          console.log(`Found window.${name}:`, window[name]);
+        }
+      });
+      
+      // Check if it's exported as a module or needs to be imported differently
+      console.log('All window properties:', Object.keys(window));
+    });
+  </script>
+  <script>
+    // Alternative approach - try to access SDK through different methods
+    console.log('Trying alternative SDK access methods...');
+    
+    // Method 1: Check if it's available as a module
+    function checkForModuleSDK() {
+      console.log('Checking for module-based SDK...');
+    }
+    
+    // Method 2: Try loading with different parameters
+    function loadScriptAlternative(src, callback) {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = function() {
+        console.log('Alternative SDK script loaded');
+        // Check multiple possible SDK locations
+        const sdkLocations = [
+          () => window.sdk,
+          () => window.Farcaster,
+          () => window.farcaster,
+          () => window.MiniApp,
+          () => window.miniapp
+        ];
+        
+        for (let i = 0; i < sdkLocations.length; i++) {
+          try {
+            const sdk = sdkLocations[i]();
+            if (sdk) {
+              console.log(`SDK found at location ${i}:`, sdk);
+              if (sdk.actions && typeof sdk.actions.ready === 'function') {
+                console.log('Calling SDK ready...');
+                sdk.actions.ready();
+                console.log('SDK ready called successfully');
+                return;
+              }
+            }
+          } catch (e) {
+            // Continue checking
+          }
+        }
+        
+        console.log('SDK not found in any expected location');
+        if (callback) callback();
+      };
+      script.onerror = function() {
+        console.error('Failed to load alternative SDK script from:', src);
+      };
+      document.head.appendChild(script);
+    }
+    
+    // Try loading with crossorigin attribute
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js';
+    script.crossOrigin = 'anonymous';
+    script.onload = function() {
+      console.log('SDK script with crossorigin loaded');
+      // Check for SDK in various locations
+      const possibleSDKs = ['sdk', 'Farcaster', 'farcaster', 'MiniApp', 'miniapp'];
+      possibleSDKs.forEach(sdkName => {
+        if (window[sdkName]) {
+          console.log(`Found ${sdkName}:`, window[sdkName]);
+          if (window[sdkName].actions && typeof window[sdkName].actions.ready === 'function') {
+            console.log(`Calling ${sdkName}.actions.ready()...`);
+            try {
+              window[sdkName].actions.ready();
+              console.log(`${sdkName}.actions.ready() called successfully`);
+            } catch (error) {
+              console.error(`Error calling ${sdkName}.actions.ready():`, error);
+            }
+          }
+        }
+      });
+    };
+    script.onerror = function() {
+      console.error('Failed to load SDK script with crossorigin');
+    };
+    document.head.appendChild(script);
+  </script>
+  <script>
+    // Final approach - try multiple methods to access the SDK
+    console.log('Trying multiple SDK access methods...');
+    
+    // Method 1: Direct script loading with error checking
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js';
+    script.onload = function() {
+      console.log('SDK script loaded successfully');
+      
+      // Check all possible SDK locations immediately
+      setTimeout(function() {
+        console.log('Checking for SDK after 100ms delay...');
+        const possibleLocations = ['sdk', 'Farcaster', 'farcaster', 'MiniApp', 'miniapp'];
+        
+        // Check window object
+        possibleLocations.forEach(location => {
+          if (window[location]) {
+            console.log(`Found SDK at window.${location}:`, window[location]);
+            if (window[location].actions && typeof window[location].actions.ready === 'function') {
+              console.log('SDK ready function found, calling it...');
+              try {
+                window[location].actions.ready();
+                console.log('SDK ready called successfully!');
+              } catch (error) {
+                console.error('Error calling SDK ready:', error);
+              }
+            }
+          }
+        });
+        
+        // If still not found, log all window properties that might be related
+        const allKeys = Object.keys(window);
+        const sdkRelated = allKeys.filter(key => 
+          key.toLowerCase().includes('sdk') || 
+          key.toLowerCase().includes('farcaster') ||
+          key.toLowerCase().includes('miniapp')
+        );
+        console.log('SDK-related window properties:', sdkRelated);
+        
+        if (sdkRelated.length > 0) {
+          sdkRelated.forEach(key => {
+            console.log(`window.${key}:`, window[key]);
+          });
+        }
+      }, 100);
+    };
+    script.onerror = function() {
+      console.error('Failed to load SDK script');
+    };
+    document.head.appendChild(script);
+    
+    // Method 2: Polling for SDK availability
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds maximum
+    
+    function pollForSDK() {
+      attempts++;
+      console.log(`Polling attempt ${attempts}/${maxAttempts}`);
+      
+      // Check for SDK
+      if (window.sdk && window.sdk.actions && typeof window.sdk.actions.ready === 'function') {
+        console.log('SDK found via polling, calling ready...');
         try {
           window.sdk.actions.ready();
-          console.log('SDK ready called successfully');
+          console.log('SDK ready called successfully via polling!');
+          return;
         } catch (error) {
-          console.error('Error calling SDK ready:', error);
+          console.error('Error calling SDK ready via polling:', error);
         }
-      } else {
-        console.log('SDK still not available after loading script');
       }
-    });
+      
+      if (attempts < maxAttempts) {
+        setTimeout(pollForSDK, 100);
+      } else {
+        console.log('Max polling attempts reached, SDK not found');
+      }
+    }
+    
+    // Start polling after a delay
+    setTimeout(pollForSDK, 2000);
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
