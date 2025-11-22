@@ -16,14 +16,38 @@
       }
     }
   }' />
-  <!-- Farcaster MiniApp SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js"></script>
+  <!-- Farcaster MiniApp SDK - Trying alternative approach -->
   <script>
-    // Debug: Check if SDK loads
-    window.addEventListener('load', function() {
-      console.log('Page loaded, SDK available:', typeof window.sdk !== 'undefined');
+    // Debug: Try loading SDK dynamically
+    console.log('Attempting to load SDK dynamically...');
+    
+    // Function to load script dynamically
+    function loadScript(src, callback) {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = function() {
+        console.log('SDK script loaded successfully');
+        if (callback) callback();
+      };
+      script.onerror = function() {
+        console.error('Failed to load SDK script from:', src);
+      };
+      document.head.appendChild(script);
+    }
+    
+    // Load SDK and initialize when ready
+    loadScript('https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js', function() {
+      console.log('SDK script loaded, checking for sdk object...');
       if (typeof window.sdk !== 'undefined') {
-        console.log('SDK version:', window.sdk.version || 'unknown');
+        console.log('SDK is now available, initializing...');
+        try {
+          window.sdk.actions.ready();
+          console.log('SDK ready called successfully');
+        } catch (error) {
+          console.error('Error calling SDK ready:', error);
+        }
+      } else {
+        console.log('SDK still not available after loading script');
       }
     });
   </script>
@@ -390,6 +414,7 @@
         yVelocity = 0;
         isJumping = false;
       }
+      
       
       runner.style.bottom = newBottom + "px";
       
