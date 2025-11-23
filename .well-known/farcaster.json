@@ -12,6 +12,7 @@
     "name": "Anime Runner",
     "homeUrl": "https://nasbasegame.vercel.app",
     "iconUrl": "https://nasbasegame.vercel.app/icon.png",
+    "imageUrl": "https://nasbasegame.vercel.app/embed-image.png",
     "splashImageUrl": "https://nasbasegame.vercel.app/splash.png",
     "splashBackgroundColor": "#0d1117",
     "subtitle": "Fast, fun endless runner",
