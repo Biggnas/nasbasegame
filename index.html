@@ -444,35 +444,41 @@
   </script>
   
   <script>
-    // Ultra-simple SDK initialization
-    function initializeSDK() {
-      console.log('Checking for SDK...');
+    // Proper SDK initialization following recommended approach
+    async function initApp() {
+      console.log('Initializing app and SDK...');
       
-      // Simple check and call
-      if (window.sdk && window.sdk.actions && window.sdk.actions.ready) {
-        console.log('Calling SDK ready...');
-        window.sdk.actions.ready().catch(function(error) {
-          console.log('SDK ready error (but this might be expected):', error);
-        });
-      } else {
-        console.log('SDK not found or ready function not available');
-        // Try to hide any splash screen elements anyway
-        var splash = document.querySelector('.splash, #splash, .loading, #loading');
-        if (splash) {
-          splash.style.display = 'none';
-          console.log('Hid splash screen element');
+      try {
+        // Check if we're in a MiniApp environment and SDK is available
+        if (typeof window !== 'undefined' && window.sdk && window.sdk.actions && window.sdk.actions.ready) {
+          console.log('SDK ready function found, calling it...');
+          // Call the ready function to hide the splash screen
+          await window.sdk.actions.ready();
+          console.log('SDK ready called successfully!');
+        } else {
+          console.log('SDK not available or ready function not found');
+          // Try to hide any splash screen elements anyway
+          var splash = document.querySelector('.splash, #splash, .loading, #loading');
+          if (splash) {
+            splash.style.display = 'none';
+            console.log('Hid splash screen element');
+          }
         }
+      } catch (err) {
+        console.error("Error calling sdk.actions.ready():", err);
       }
     }
     
+    // Initialize the app after DOM is loaded and ensure it runs on client side
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loaded');
-      // Try immediately
-      initializeSDK();
-      // Try after a small delay
-      setTimeout(initializeSDK, 500);
-      // Try after a longer delay
-      setTimeout(initializeSDK, 2000);
+      console.log('DOM loaded, initializing app...');
+      
+      // Use setTimeout to ensure this runs after component mount
+      setTimeout(function() {
+        initApp().catch(function(error) {
+          console.error('Error in initApp:', error);
+        });
+      }, 100);
     });
   </script>
 </body>
