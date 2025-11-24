@@ -87,37 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("retryBtn:", !!retryBtn);
     console.log("finalScoreEl:", !!finalScoreEl);
   }
-  
-  // Initialize Farcaster MiniApp SDK if available
-  initMiniAppSDK();
 });
-
-// Initialize Farcaster MiniApp SDK
-async function initMiniAppSDK() {
-  try {
-    // Check if we're in a MiniApp environment
-    if (typeof window !== 'undefined' && window.sdk) {
-      console.log('Farcaster MiniApp SDK detected');
-      
-      // Handle context if available
-      if (window.sdk.context) {
-        console.log('MiniApp context:', window.sdk.context);
-        // You can use context data here if needed
-      }
-      
-      // Call ready() to hide splash screen
-      if (window.sdk.actions && window.sdk.actions.ready) {
-        console.log('Calling sdk.actions.ready()...');
-        await window.sdk.actions.ready();
-        console.log('SDK ready called successfully!');
-      }
-    } else {
-      console.log('Not running in a Farcaster MiniApp environment');
-    }
-  } catch (error) {
-    console.error('Error initializing Farcaster MiniApp SDK:', error);
-  }
-}
 
 // Start the game
 function startGame() {
