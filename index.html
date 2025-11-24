@@ -16,8 +16,8 @@
       }
     }
   }' />
-  <!-- Farcaster MiniApp SDK - Local version -->
-  <script src="miniapp-sdk.js"></script>
+  <!-- Farcaster MiniApp SDK - Using CDN version -->
+  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
     
@@ -449,6 +449,15 @@
       console.log('Initializing app and SDK...');
       
       try {
+        // Wait for SDK to be available (in case it loads asynchronously)
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds with 100ms intervals
+        while (attempts < maxAttempts && 
+               (typeof window === 'undefined' || !window.sdk || !window.sdk.actions || !window.sdk.actions.ready)) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
         // Check if we're in a MiniApp environment and SDK is available
         if (typeof window !== 'undefined' && window.sdk && window.sdk.actions && window.sdk.actions.ready) {
           console.log('SDK ready function found, calling it...');
@@ -456,7 +465,7 @@
           await window.sdk.actions.ready();
           console.log('SDK ready called successfully!');
         } else {
-          console.log('SDK not available or ready function not found');
+          console.log('SDK not available or ready function not found after waiting');
           // Try to hide any splash screen elements anyway
           var splash = document.querySelector('.splash, #splash, .loading, #loading');
           if (splash) {

@@ -9,6 +9,8 @@ var highScore = 0;
 var yVelocity = 0;
 var isJumping = false;
 var gameSpeed = 3.0;
+var nextSpawnTime = 0;
+var frameCount = 0;
 
 // DOM Elements
 var stage, runner, obstaclesContainer, scoreEl, hiEl;
@@ -85,7 +87,37 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("retryBtn:", !!retryBtn);
     console.log("finalScoreEl:", !!finalScoreEl);
   }
+  
+  // Initialize Farcaster MiniApp SDK if available
+  initMiniAppSDK();
 });
+
+// Initialize Farcaster MiniApp SDK
+async function initMiniAppSDK() {
+  try {
+    // Check if we're in a MiniApp environment
+    if (typeof window !== 'undefined' && window.sdk) {
+      console.log('Farcaster MiniApp SDK detected');
+      
+      // Handle context if available
+      if (window.sdk.context) {
+        console.log('MiniApp context:', window.sdk.context);
+        // You can use context data here if needed
+      }
+      
+      // Call ready() to hide splash screen
+      if (window.sdk.actions && window.sdk.actions.ready) {
+        console.log('Calling sdk.actions.ready()...');
+        await window.sdk.actions.ready();
+        console.log('SDK ready called successfully!');
+      }
+    } else {
+      console.log('Not running in a Farcaster MiniApp environment');
+    }
+  } catch (error) {
+    console.error('Error initializing Farcaster MiniApp SDK:', error);
+  }
+}
 
 // Start the game
 function startGame() {
@@ -98,6 +130,8 @@ function startGame() {
   gameSpeed = 3.0;
   yVelocity = 0;
   isJumping = false;
+  frameCount = 0;
+  nextSpawnTime = Date.now() + 1500; // First obstacle after 1.5 seconds
   
   // Hide overlays
   startOverlay.style.display = "none";
@@ -120,13 +154,25 @@ function jump() {
   yVelocity = 8.9;
 }
 
+// Spawn obstacle
+function spawnObstacle() {
+  const obstacle = document.createElement("div");
+  obstacle.className = "obstacle";
+  obstacle.style.right = "-30px"; // Start off-screen to the right
+  obstaclesContainer.appendChild(obstacle);
+}
+
 // Game loop
 function gameLoop() {
   if (!gameRunning) return;
   
-  // Update score
-  score += 0.1;
-  scoreEl.textContent = Math.floor(score);
+  frameCount++;
+  
+  // Update score (slower now)
+  if (frameCount % 5 === 0) { // Only update score every 5 frames
+    score += 0.1;
+    scoreEl.textContent = Math.floor(score);
+  }
   
   // Apply gravity
   yVelocity -= 0.37;
@@ -139,6 +185,43 @@ function gameLoop() {
   }
   
   runner.style.bottom = newBottom + "px";
+  
+  // Spawn obstacles
+  const now = Date.now();
+  if (now >= nextSpawnTime) {
+    spawnObstacle();
+    nextSpawnTime = now + 1000 + Math.random() * 1000; // Next obstacle in 1-2 seconds
+  }
+  
+  // Move obstacles and check collisions
+  const obstacles = document.querySelectorAll(".obstacle");
+  obstacles.forEach(obstacle => {
+    // Move obstacle left
+    const currentRight = parseFloat(obstacle.style.right || "0");
+    obstacle.style.right = (currentRight + gameSpeed) + "px";
+    
+    // Remove obstacles that are off-screen
+    if (currentRight > stage.offsetWidth) {
+      obstacle.remove();
+      return;
+    }
+    
+    // Check collision (simplified)
+    const runnerRect = runner.getBoundingClientRect();
+    const obstacleRect = obstacle.getBoundingClientRect();
+    
+    // Simple collision detection
+    if (runnerRect.right > obstacleRect.left && 
+        runnerRect.left < obstacleRect.right &&
+        runnerRect.bottom > obstacleRect.top) {
+      endGame();
+    }
+  });
+  
+  // Increase game speed gradually
+  if (frameCount % 100 === 0) {
+    gameSpeed += 0.1;
+  }
   
   // Continue loop
   requestAnimationFrame(gameLoop);
