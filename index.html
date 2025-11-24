@@ -18,6 +18,24 @@
   }' />
   <!-- Farcaster MiniApp SDK - Local version -->
   <script src="miniapp-sdk.js"></script>
+
+    <!-- Correct SDK ready() call -->
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        console.log("Checking MiniApp SDK...");
+        if (window.sdk?.actions?.ready) {
+          console.log("Calling sdk.actions.ready()...");
+          await window.sdk.actions.ready();
+          console.log("MiniApp is READY ✔");
+        } else {
+          console.warn("MiniApp SDK not detected");
+        }
+      } catch (e) {
+        console.error("Error calling sdk.actions.ready():", e);
+      }
+    });
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
     
