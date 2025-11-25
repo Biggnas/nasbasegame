@@ -9,7 +9,7 @@
   },
   "miniapp": {
     "version": "1",
-    "name": "Anime Runnersssz",
+    "name": "Anime Runner",
     "homeUrl": "https://nasbasegame.vercel.app",
     "iconUrl": "https://nasbasegame.vercel.app/icon.png",
     "imageUrl": "https://nasbasegame.vercel.app/embed-image.png",

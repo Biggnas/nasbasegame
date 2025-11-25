@@ -3,50 +3,108 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Anime Runnersssz</title>
+  <title>Anime Runner</title>
   <meta name="fc:channel" content="base" />
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://nasbasegame.vercel.app/embed-image.png","button":{"title":"Play Now","action":{"type":"launch_miniapp","name":"Anime Runnersssz","url":"https://nasbasegame.vercel.app"}}}' />
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://nasbasegame.vercel.app/embed-image.png","button":{"title":"Play Now","action":{"type":"launch_miniapp","name":"Anime Runner","url":"https://nasbasegame.vercel.app"}}}' />
   <!-- Farcaster MiniApp SDK - Using CDN version -->
   <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js"></script>
   
   <!-- SDK ready() call -->
   <script>
-    // Simple and reliable SDK initialization
-    function initFarcasterSDK() {
+    let readyCalled = false;
+    
+    // Debug function to log SDK state
+    function debugSDKState() {
+      console.log("=== SDK Debug Info ===");
+      console.log("window.sdk exists:", !!window.sdk);
+      if (window.sdk) {
+        console.log("window.sdk.actions exists:", !!window.sdk.actions);
+        if (window.sdk.actions) {
+          console.log("window.sdk.actions.ready exists:", !!window.sdk.actions.ready);
+          console.log("window.sdk.actions.ready is function:", typeof window.sdk.actions.ready === 'function');
+        }
+        console.log("window.sdk.isInMiniApp:", window.sdk.isInMiniApp);
+        console.log("window.sdk.context:", window.sdk.context);
+      }
+      console.log("=====================");
+    }
+    
+    // Robust SDK initialization with retry mechanism
+    async function initFarcasterSDK() {
+      if (readyCalled) {
+        console.log("SDK ready() already called, skipping...");
+        return;
+      }
+      
       console.log("Attempting to initialize Farcaster SDK...");
       
-      // Check if SDK is available
-      if (typeof window !== 'undefined' && window.sdk) {
+      try {
+        // Log current SDK state for debugging
+        debugSDKState();
+        
+        // Wait for SDK to be available (with timeout)
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds with 100ms intervals
+        
+        // Wait for window.sdk to be available
+        while (attempts < maxAttempts && !window.sdk) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
+        if (!window.sdk) {
+          console.warn("Farcaster SDK not detected after waiting");
+          debugSDKState();
+          return;
+        }
+        
         console.log("Farcaster SDK detected");
+        
+        // Wait for actions to be available
+        attempts = 0;
+        while (attempts < maxAttempts && !window.sdk.actions) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
+        if (!window.sdk.actions) {
+          console.warn("Farcaster SDK actions not available after waiting");
+          debugSDKState();
+          return;
+        }
         
         // Call ready() if available
         if (window.sdk.actions && typeof window.sdk.actions.ready === 'function') {
           console.log("Calling sdk.actions.ready()...");
-          window.sdk.actions.ready()
-            .then(() => {
-              console.log("Farcaster MiniApp is READY! Splash screen should be hidden.");
-            })
-            .catch((error) => {
-              console.error("Error calling sdk.actions.ready():", error);
-            });
+          await window.sdk.actions.ready();
+          console.log("Farcaster MiniApp is READY! Splash screen should be hidden.");
+          readyCalled = true;
         } else {
-          console.warn("sdk.actions.ready not available");
+          console.warn("sdk.actions.ready not available or not a function");
+          debugSDKState();
         }
-      } else {
-        console.log("Farcaster SDK not detected - may not be running in MiniApp environment");
+      } catch (error) {
+        console.error("Error initializing Farcaster SDK:", error);
+        debugSDKState();
       }
     }
     
     // Initialize SDK when DOM is loaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initFarcasterSDK);
-    } else {
-      // DOM is already ready
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log("DOM loaded, initializing Farcaster SDK...");
       initFarcasterSDK();
-    }
+    });
     
-    // Also try after a short delay to ensure SDK is loaded
-    setTimeout(initFarcasterSDK, 1000);
+    // Also try after different delays to handle various loading scenarios
+    setTimeout(() => {
+      console.log("Retrying SDK initialization after 2s delay...");
+      initFarcasterSDK();
+    }, 2000);
+    
+    setTimeout(() => {
+      console.log("Final SDK initialization attempt after 5s delay...");
+      initFarcasterSDK();
+    }, 5000);
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
