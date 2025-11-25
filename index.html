@@ -5,37 +5,60 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Anime Runner</title>
   <meta name="fc:channel" content="base" />
-  <meta name="fc:miniapp" content='{"version":"v1","imageUrl":"https://nasbasegame.vercel.app/embed-image.png","button":{"title":"Play Now","action":{"type":"launch_miniapp","name":"Anime Runner","url":"https://nasbasegame.vercel.app"}}}' />
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://nasbasegame.vercel.app/embed-image.png","button":{"title":"Play Now","action":{"type":"launch_miniapp","name":"Anime Runner","url":"https://nasbasegame.vercel.app"}}}' />
   <!-- Farcaster MiniApp SDK - Using CDN version -->
   <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.min.js"></script>
   
   <!-- SDK ready() call -->
   <script>
+    // Flag to ensure ready() is only called once
+    let sdkReadyCalled = false;
+    
+    // Function to call sdk.actions.ready()
+    async function callSdkReady() {
+      if (sdkReadyCalled) return;
+      
+      try {
+        if (typeof window !== 'undefined' && window.sdk && 
+            window.sdk.actions && typeof window.sdk.actions.ready === 'function') {
+          console.log("Calling sdk.actions.ready()...");
+          await window.sdk.actions.ready();
+          console.log("Farcaster MiniApp is READY! Splash screen should be hidden.");
+          sdkReadyCalled = true;
+        } else {
+          console.warn("SDK not ready or ready() function not available");
+        }
+      } catch (error) {
+        console.error("Error calling sdk.actions.ready():", error);
+      }
+    }
+    
     // Initialize the Farcaster MiniApp SDK
     async function initFarcasterSDK() {
       try {
         console.log("Initializing Farcaster MiniApp SDK...");
         
+        // Wait for window.sdk to be available
+        let attempts = 0;
+        const maxAttempts = 100; // 10 seconds with 100ms intervals
+        while (attempts < maxAttempts && !window.sdk) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
         // Check if we're in a MiniApp environment
         if (typeof window !== 'undefined' && window.sdk) {
           console.log("Farcaster SDK detected");
           
-          // Wait for the SDK to be ready (with timeout)
-          let attempts = 0;
-          const maxAttempts = 100; // 10 seconds with 100ms intervals
-          while (attempts < maxAttempts && !window.sdk.actions?.ready) {
+          // Wait for actions to be available
+          attempts = 0;
+          while (attempts < maxAttempts && !window.sdk.actions) {
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
           }
           
-          // Call ready() to hide splash screen
-          if (window.sdk.actions?.ready) {
-            console.log("Calling sdk.actions.ready()...");
-            await window.sdk.actions.ready();
-            console.log("Farcaster MiniApp is READY! Splash screen should be hidden.");
-          } else {
-            console.warn("sdk.actions.ready not available");
-          }
+          // Call ready() immediately
+          await callSdkReady();
         } else {
           console.log("Not running in a Farcaster MiniApp environment");
         }
@@ -44,8 +67,19 @@
       }
     }
     
+    // Also try to call ready() after a delay as a fallback
+    setTimeout(callSdkReady, 2000);
+    
     // Initialize SDK when DOM is loaded
-    document.addEventListener("DOMContentLoaded", initFarcasterSDK);
+    if (document.readyState === 'loading') {
+      document.addEventListener("DOMContentLoaded", initFarcasterSDK);
+    } else {
+      // DOM is already ready
+      initFarcasterSDK();
+    }
+    
+    // Additional fallback: try calling ready() when window loads
+    window.addEventListener('load', callSdkReady);
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
