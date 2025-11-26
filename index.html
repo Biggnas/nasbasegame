@@ -9,26 +9,52 @@
   <!-- Farcaster MiniApp SDK - Using specific version -->
   <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@0.2.1/dist/index.min.js"></script>
   
-  <!-- SDK ready() call - Simplified approach -->
+  <!-- SDK ready() call - Polling approach -->
   <script>
-    // Simple initialization following Farcaster documentation
-    document.addEventListener("DOMContentLoaded", async () => {
-      console.log("DOM loaded, checking for Farcaster SDK...");
+    let readyCalled = false;
+    
+    // Function to call ready() when SDK is available
+    async function tryCallReady() {
+      if (readyCalled) return;
       
-      // Small delay to ensure SDK is loaded
-      setTimeout(async () => {
+      console.log("Checking for Farcaster SDK...");
+      
+      // Check if SDK is available and call ready()
+      if (window.sdk?.actions?.ready && typeof window.sdk.actions.ready === 'function') {
         try {
-          // Check if SDK is available and call ready()
-          if (window.sdk?.actions?.ready) {
-            console.log("Calling sdk.actions.ready()...");
-            await window.sdk.actions.ready();
-            console.log("Farcaster MiniApp is READY!");
-          } else {
-            console.log("Farcaster SDK not detected or ready() not available");
-            console.log("window.sdk:", window.sdk);
-          }
+          console.log("Calling sdk.actions.ready()...");
+          await window.sdk.actions.ready();
+          console.log("Farcaster MiniApp is READY!");
+          readyCalled = true;
+          return true;
         } catch (error) {
-          console.error("Error initializing Farcaster SDK:", error);
+          console.error("Error calling sdk.actions.ready():", error);
+          return false;
+        }
+      }
+      return false;
+    }
+    
+    // Poll for SDK availability
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("DOM loaded, starting SDK polling...");
+      
+      // Try immediately
+      tryCallReady();
+      
+      // Poll every 500ms for up to 10 seconds
+      let attempts = 0;
+      const maxAttempts = 20;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        console.log(`Polling attempt ${attempts}/${maxAttempts}`);
+        
+        const success = await tryCallReady();
+        if (success || attempts >= maxAttempts || readyCalled) {
+          clearInterval(pollInterval);
+          if (!success && !readyCalled) {
+            console.log("Failed to call ready() after maximum attempts");
+          }
         }
       }, 500);
     });
