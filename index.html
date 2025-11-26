@@ -6,18 +6,26 @@
   <title>Anime Runner</title>
   <meta name="fc:channel" content="base" />
   <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://nasbasegame.vercel.app/embed-image.png","button":{"title":"Play Now","action":{"type":"launch_miniapp","name":"Anime Runner","url":"https://nasbasegame.vercel.app"}}}' />
-  <!-- Farcaster MiniApp SDK - Using specific version -->
-  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@0.2.1/dist/index.min.js"></script>
+  <!-- Farcaster MiniApp SDK - Using specific version with error handling -->
+  <script 
+    src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@0.2.1/dist/index.min.js"
+    onload="console.log('Farcaster SDK script loaded successfully')"
+    onerror="console.error('Failed to load Farcaster SDK script')">
+  </script>
   
-  <!-- SDK ready() call - Polling approach -->
+  <!-- SDK ready() call - Robust approach with error handling -->
   <script>
     let readyCalled = false;
     
     // Function to call ready() when SDK is available
     async function tryCallReady() {
-      if (readyCalled) return;
+      if (readyCalled) {
+        console.log("ready() already called");
+        return true;
+      }
       
       console.log("Checking for Farcaster SDK...");
+      console.log("window.sdk exists:", !!window.sdk);
       
       // Check if SDK is available and call ready()
       if (window.sdk?.actions?.ready && typeof window.sdk.actions.ready === 'function') {
@@ -31,13 +39,23 @@
           console.error("Error calling sdk.actions.ready():", error);
           return false;
         }
+      } else {
+        console.log("SDK not ready yet:");
+        console.log("  window.sdk:", !!window.sdk);
+        if (window.sdk) {
+          console.log("  window.sdk.actions:", !!window.sdk.actions);
+          if (window.sdk.actions) {
+            console.log("  window.sdk.actions.ready:", !!window.sdk.actions.ready);
+            console.log("  typeof ready:", typeof window.sdk.actions.ready);
+          }
+        }
+        return false;
       }
-      return false;
     }
     
     // Poll for SDK availability
-    document.addEventListener("DOMContentLoaded", () => {
-      console.log("DOM loaded, starting SDK polling...");
+    function startPolling() {
+      console.log("Starting SDK polling...");
       
       // Try immediately
       tryCallReady();
@@ -57,7 +75,19 @@
           }
         }
       }, 500);
+    }
+    
+    // Start polling when DOM is loaded
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("DOM loaded");
+      startPolling();
     });
+    
+    // Also start polling after a delay to ensure everything is loaded
+    setTimeout(() => {
+      console.log("Starting delayed polling");
+      startPolling();
+    }, 2000);
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
