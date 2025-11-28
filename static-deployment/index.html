@@ -1,31 +1,97 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Anime Runner</title>
-  <meta name="fc:miniapp" content='{
-    "version":"next",
-    "imageUrl":"https://nasbasegame.vercel.app/embed-image.png",
-    "button":{
-      "title":"Play Now",
-      "action":{
-        "type":"launch_miniapp",
-        "name":"Anime Runner",
-        "url":"https://nasbasegame.vercel.app"
+  <meta name="fc:channel" content="base" />
+  <link rel="manifest" href="/farcaster.json" type="application/farcaster+json">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <meta name="fc:miniapp"
+    content='{"version":"1","imageUrl":"https://nasbasegame.vercel.app/embed-image.png","button":{"title":"Play Now","action":{"type":"launch_miniapp","name":"Anime Runner","url":"https://nasbasegame.vercel.app"}}}' />
+  <!-- Farcaster MiniApp SDK - Using specific version with error handling -->
+  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@0.2.1/dist/index.min.js"
+    onload="console.log('Farcaster SDK script loaded successfully')"
+    onerror="console.error('Failed to load Farcaster SDK script')">
+    </script>
+
+  <!-- SDK ready() call - Robust approach with error handling -->
+  <script>
+    let readyCalled = false;
+
+    async function tryCallReady() {
+      if (readyCalled) {
+        console.log("ready() already called");
+        return true;
+      }
+
+      console.log("Checking for Farcaster SDK...");
+      console.log("window.sdk exists:", !!window.sdk);
+
+      if (window.sdk?.actions?.ready && typeof window.sdk.actions.ready === "function") {
+        try {
+          console.log("Calling sdk.actions.ready()...");
+          await window.sdk.actions.ready();
+          console.log("Farcaster MiniApp is READY!");
+          readyCalled = true;
+          return true;
+        } catch (error) {
+          console.error("Error calling sdk.actions.ready():", error);
+          return false;
+        }
+      } else {
+        console.log("SDK not ready yet:");
+        console.log("  window.sdk:", !!window.sdk);
+        if (window.sdk) {
+          console.log("  window.sdk.actions:", !!window.sdk.actions);
+          if (window.sdk.actions) {
+            console.log("  window.sdk.actions.ready:", !!window.sdk.actions.ready);
+            console.log("  typeof ready:", typeof window.sdk.actions.ready);
+          }
+        }
+        return false;
       }
     }
-  }' />
+
+    function startPolling() {
+      console.log("Starting SDK polling...");
+
+      tryCallReady();
+
+      let attempts = 0;
+      const maxAttempts = 20;
+
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        console.log(`Polling attempt ${attempts}/${maxAttempts}`);
+
+        const success = await tryCallReady();
+        if (success || attempts >= maxAttempts || readyCalled) {
+          clearInterval(pollInterval);
+          if (!success && !readyCalled) {
+            console.log("Failed to call ready() after maximum attempts");
+          }
+        }
+      }, 500);
+    }
+
+    window.addEventListener("load", () => {
+      console.log("Window fully loaded — starting SDK polling");
+      startPolling();
+    });
+  </script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
-    
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       font-family: 'Lexend', sans-serif;
     }
-    
+
     body {
       background: #0d1117;
       color: #fff;
@@ -33,7 +99,7 @@
       display: flex;
       flex-direction: column;
     }
-    
+
     .topbar {
       display: flex;
       justify-content: space-between;
@@ -42,19 +108,19 @@
       background: #111827;
       border-bottom: 1px solid #1f2937;
     }
-    
+
     .title {
       font-weight: 600;
       font-size: 1.1rem;
     }
-    
+
     .scores {
       display: flex;
       gap: 16px;
       font-size: 0.9rem;
       opacity: 0.9;
     }
-    
+
     .stage-wrap {
       flex: 1;
       display: flex;
@@ -62,7 +128,7 @@
       align-items: center;
       padding: 10px;
     }
-    
+
     .stage {
       width: 95%;
       max-width: 600px;
@@ -73,7 +139,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .ground {
       position: absolute;
       bottom: 0;
@@ -82,7 +148,7 @@
       height: 6px;
       background: #374151;
     }
-    
+
     .runner {
       position: absolute;
       bottom: 6px;
@@ -93,12 +159,12 @@
       flex-direction: column;
       align-items: center;
     }
-    
+
     .runner-sprite {
       width: 42px;
       height: 56px;
     }
-    
+
     .body {
       width: 14px;
       height: 36px;
@@ -107,31 +173,42 @@
       margin-top: -4px;
       position: relative;
     }
-    
-    .arm, .leg {
+
+    .arm,
+    .leg {
       position: absolute;
       background: #1e3a8a;
       border-radius: 4px;
     }
-    
+
     .arm {
       width: 6px;
       height: 20px;
       top: 4px;
     }
-    
-    .arm-left { left: -8px; }
-    .arm-right { right: -8px; }
-    
+
+    .arm-left {
+      left: -8px;
+    }
+
+    .arm-right {
+      right: -8px;
+    }
+
     .leg {
       width: 6px;
       height: 22px;
       bottom: -20px;
     }
-    
-    .leg-left { left: 2px; }
-    .leg-right { right: 2px; }
-    
+
+    .leg-left {
+      left: 2px;
+    }
+
+    .leg-right {
+      right: 2px;
+    }
+
     .obstacle {
       position: absolute;
       bottom: 6px;
@@ -140,18 +217,18 @@
       background: #9ca3af;
       border-radius: 4px;
     }
-    
+
     .overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.65);
+      background: rgba(0, 0, 0, 0.65);
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 14px;
       z-index: 10;
     }
-    
+
     .overlay-card {
       background: #111827;
       padding: 24px;
@@ -161,18 +238,18 @@
       text-align: center;
       border: 1px solid #1f2937;
     }
-    
+
     .big {
       font-size: 1.4rem;
       margin-bottom: 8px;
       font-weight: 600;
     }
-    
+
     .muted {
       font-size: 0.85rem;
       opacity: 0.8;
     }
-    
+
     .primary {
       background: #2563eb;
       color: white;
@@ -183,9 +260,11 @@
       cursor: pointer;
       font-weight: 500;
     }
-    
-    .primary:hover { background: #1d4ed8; }
-    
+
+    .primary:hover {
+      background: #1d4ed8;
+    }
+
     .hint {
       padding: 10px;
       text-align: center;
@@ -194,6 +273,7 @@
     }
   </style>
 </head>
+
 <body>
   <header class="topbar">
     <div class="title">Anime Runner</div>
@@ -210,11 +290,11 @@
       <!-- runner (SVG head + simple body) -->
       <div id="runner" class="runner" aria-hidden="true">
         <svg viewBox="0 0 120 160" class="runner-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <ellipse cx="60" cy="48" rx="20" ry="22" fill="#ffd8c4"/>
-          <path d="M60 18c-12 0-22 8-28 18 6-8 18-14 28-14s22 6 28 14c-6-10-16-18-28-18z" fill="#1e1e2f"/>
-          <ellipse cx="52" cy="48" rx="3.4" ry="4" fill="#111"/>
-          <ellipse cx="68" cy="48" rx="3.4" ry="4" fill="#111"/>
-          <path d="M54 60 q6 6 12 0" stroke="#5a2b1b" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <ellipse cx="60" cy="48" rx="20" ry="22" fill="#ffd8c4" />
+          <path d="M60 18c-12 0-22 8-28 18 6-8 18-14 28-14s22 6 28 14c-6-10-16-18-28-18z" fill="#1e1e2f" />
+          <ellipse cx="52" cy="48" rx="3.4" ry="4" fill="#111" />
+          <ellipse cx="68" cy="48" rx="3.4" ry="4" fill="#111" />
+          <path d="M54 60 q6 6 12 0" stroke="#5a2b1b" stroke-width="1.2" fill="none" stroke-linecap="round" />
         </svg>
 
         <div class="body">
@@ -262,7 +342,7 @@
     } catch (e) {
       console.log("Ethereum conflict detected, continuing...");
     }
-    
+
     // Game variables
     let gameRunning = false;
     let score = 0;
@@ -272,13 +352,13 @@
     let gameSpeed = 3.0;
     let nextSpawnTime = 0;
     let frameCount = 0;
-    
+
     // DOM Elements
     let stage, runner, obstaclesContainer, scoreEl, hiEl;
     let startOverlay, gameOverOverlay, startBtn, retryBtn, finalScoreEl;
-    
+
     // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // Get all game elements
       stage = document.getElementById("stage");
       runner = document.getElementById("runner");
@@ -290,20 +370,20 @@
       startBtn = document.getElementById("startBtn");
       retryBtn = document.getElementById("retryBtn");
       finalScoreEl = document.getElementById("finalScore");
-      
+
       // Set up event listeners
       startBtn.addEventListener('click', startGame);
       retryBtn.addEventListener('click', startGame);
-      
-      stage.addEventListener('click', function() {
+
+      stage.addEventListener('click', function () {
         if (!gameRunning) {
           startGame();
         } else {
           jump();
         }
       });
-      
-      document.addEventListener('keydown', function(e) {
+
+      document.addEventListener('keydown', function (e) {
         if (e.code === "Space") {
           if (!gameRunning) {
             startGame();
@@ -312,11 +392,11 @@
           }
         }
       });
-      
+
       // Initialize high score
       hiEl.textContent = highScore;
     });
-    
+
     // Start the game
     function startGame() {
       // Reset game state
@@ -328,28 +408,28 @@
       isJumping = false;
       frameCount = 0;
       nextSpawnTime = Date.now() + 1500; // First obstacle after 1.5 seconds
-      
+
       // Hide overlays
       startOverlay.style.display = "none";
       gameOverOverlay.style.display = "none";
-      
+
       // Clear obstacles
       obstaclesContainer.innerHTML = "";
-      
+
       // Position runner
       runner.style.bottom = "6px";
-      
+
       // Start game loop
       gameLoop();
     }
-    
+
     // Jump function
     function jump() {
       if (!gameRunning || isJumping) return;
       isJumping = true;
       yVelocity = 8.9;
     }
-    
+
     // Spawn obstacle
     function spawnObstacle() {
       const obstacle = document.createElement("div");
@@ -357,88 +437,90 @@
       obstacle.style.right = "-30px"; // Start off-screen to the right
       obstaclesContainer.appendChild(obstacle);
     }
-    
+
     // Game loop
     function gameLoop() {
       if (!gameRunning) return;
-      
+
       frameCount++;
-      
+
       // Update score (slower now)
       if (frameCount % 5 === 0) { // Only update score every 5 frames
         score += 0.1;
         scoreEl.textContent = Math.floor(score);
       }
-      
+
       // Apply gravity
       yVelocity -= 0.37;
       let newBottom = parseFloat(runner.style.bottom || "6") + yVelocity;
-      
+
       if (newBottom <= 6) {
         newBottom = 6;
         yVelocity = 0;
         isJumping = false;
       }
-      
+
       runner.style.bottom = newBottom + "px";
-      
+
       // Spawn obstacles
       const now = Date.now();
       if (now >= nextSpawnTime) {
         spawnObstacle();
         nextSpawnTime = now + 1000 + Math.random() * 1000; // Next obstacle in 1-2 seconds
       }
-      
+
       // Move obstacles and check collisions
       const obstacles = document.querySelectorAll(".obstacle");
       obstacles.forEach(obstacle => {
         // Move obstacle left
         const currentRight = parseFloat(obstacle.style.right || "0");
         obstacle.style.right = (currentRight + gameSpeed) + "px";
-        
+
         // Remove obstacles that are off-screen
         if (currentRight > stage.offsetWidth) {
           obstacle.remove();
           return;
         }
-        
+
         // Check collision (simplified)
         const runnerRect = runner.getBoundingClientRect();
         const obstacleRect = obstacle.getBoundingClientRect();
-        
+
         // Simple collision detection
-        if (runnerRect.right > obstacleRect.left && 
-            runnerRect.left < obstacleRect.right &&
-            runnerRect.bottom > obstacleRect.top) {
+        if (runnerRect.right > obstacleRect.left &&
+          runnerRect.left < obstacleRect.right &&
+          runnerRect.bottom > obstacleRect.top) {
           endGame();
         }
       });
-      
+
       // Increase game speed gradually
       if (frameCount % 100 === 0) {
         gameSpeed += 0.1;
       }
-      
+
       // Continue loop
       requestAnimationFrame(gameLoop);
     }
-    
+
     // End game
     function endGame() {
       gameRunning = false;
-      
+
       // Update high score
       if (score > highScore) {
         highScore = Math.floor(score);
         hiEl.textContent = highScore;
       }
-      
+
       // Show final score
       finalScoreEl.textContent = Math.floor(score);
-      
+
       // Show game over screen
       gameOverOverlay.style.display = "flex";
     }
   </script>
+
 </body>
+
 </html>
