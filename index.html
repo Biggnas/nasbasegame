@@ -19,29 +19,23 @@
   <!-- SDK ready() call - Robust approach with error handling -->
   <script>
     async function callReady() {
-      // Wait until window.sdk.actions.ready exists
-      const timeout = 10000; // 10 seconds max
-      const start = Date.now();
+      if (!window.sdk || !window.sdk.actions) {
+        console.warn("SDK not yet loaded, retrying...");
+        setTimeout(callReady, 200);
+        return;
+      }
 
-      const interval = setInterval(async () => {
-        if (window.sdk?.actions?.ready) {
-          try {
-            await window.sdk.actions.ready();
-            console.log("✅ MiniApp READY!");
-            clearInterval(interval);
-          } catch (err) {
-            console.error("Failed to call ready():", err);
-          }
-        } else if (Date.now() - start > timeout) {
-          console.warn("SDK not ready after 10 seconds");
-          clearInterval(interval);
-        }
-      }, 200); // check every 200ms
+      try {
+        await window.sdk.actions.ready();
+        console.log("✅ MiniApp READY!");
+      } catch (err) {
+        console.error("Failed to call sdk.actions.ready():", err);
+      }
     }
 
-    // Start checking as soon as possible
     callReady();
   </script>
+
 
 
   <style>
